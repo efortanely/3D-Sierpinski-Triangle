@@ -1,89 +1,95 @@
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Point;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Random;
 
-public class ThreeDee extends Engine{
-	double θ = 0, φ = 0;
-	ArrayList<Point3D> graph = new ArrayList<Point3D>();
-	Point cursor = new Point(0,0), disp = new Point(0,0);
-	final int UP = 0, DOWN = 1, LEFT = 2, RIGHT = 3;
-	boolean[] dir = new boolean[4];
+public class ThreeDee extends Engine {
+	double θ, φ;
+	ArrayList<Point3D> graph;
+	Point cursor, disp;
 
-	@Override public void first(Graphics2D g) {
+	@Override
+	public void first(Graphics2D g) {
 		int size = 150;
-		Point3D[] pt = { new Point3D(-size,size,0), new Point3D(-size,-size,0), new Point3D(size,size,0),
-				new Point3D(size,-size,0), new Point3D(0,0,((size ) / Math.tan(Math.PI/6))) };
+		graph = new ArrayList<Point3D>();
+		cursor = disp = new Point(0, 0);
+		Point3D[] pt = { new Point3D(-size, size, 0), new Point3D(-size, -size, 0), new Point3D(size, size, 0),
+				new Point3D(size, -size, 0), new Point3D(0, 0, ((size) / Math.tan(Math.PI / 6))) };
 
 		Random rand = new Random();
 		Point3D cur = pt[0].midpoint(pt[1]);
-		for(int i = 0; i < 50000; i++){
+		for (int i = 0; i < 50000; i++) {
 			cur = cur.midpoint(pt[rand.nextInt(5)]);
-			graph.add(new Point3D(cur.x,cur.y,cur.z, Color.getHSBColor((float) ( 1 / ( 1+ Math.pow(1.018,-cur.z) ) ),0.8f,0.7f)));
+			graph.add(new Point3D(cur.x, cur.y, cur.z, Color.getHSBColor((float) (cur.z / size), 0.8f, 0.7f)));
 		}
 	}
 
-	@Override public void loop(Graphics2D go) {
-		Graphics2D g = (Graphics2D) go.create();	
-		g.setColor(new Color(30,30,30));
-		g.fillRect(0,0,getWidth(),getHeight());
-		g.translate(getWidth()/2,getHeight()/2);
-		
-		for(int i = 0; i < graph.size(); i++){
-			Point p = graph.get(i).getRender(θ,φ);
-			g.setColor(graph.get(i).getColor());
-			g.fillOval(p.x, p.y, 1, 1);
+	@Override
+	public void loop(Graphics2D go) {
+		Graphics2D g = (Graphics2D) go.create();
+		g.setColor(new Color(30, 30, 30));
+		g.fillRect(0, 0, getWidth(), getHeight());
+		g.translate(getWidth() / 2, getHeight() / 2);
+
+		for (Point3D point : graph) {
+			point.draw(g, θ, φ);
 		}
-				
+
 		θ += disp.x * 0.1;
-		if(dir[LEFT])   θ -= Math.PI/15;
-		if(dir[RIGHT]) θ += Math.PI/15;
-			
 		φ += disp.y * 0.1;
-		if(dir[UP]) φ += Math.PI/15;
-		if(dir[DOWN]) φ -= Math.PI/15;
-		
-		for(int i=0; i<dir.length; i++){ dir[i]=false; }
-		
+
 		g.dispose();
 	}
-		
-	@Override public void mouseDragged(MouseEvent e) {
+
+	@Override
+	public void mouseDragged(MouseEvent e) {
 		disp.x = e.getX() - cursor.x;
 		disp.y = e.getY() - cursor.y;
 		cursor = e.getPoint();
 	}
-	
-	@Override public void mousePressed(MouseEvent e){ cursor = e.getPoint(); }
-	@Override public void mouseReleased(MouseEvent e) { disp.x = 0; disp.y = 0;}
-	
-	@Override public void keyPressed(KeyEvent e){
-		switch(e.getKeyCode()){
-			case KeyEvent.VK_UP: dir[UP] = true; break;
-			case KeyEvent.VK_DOWN: dir[DOWN] = true; break;
-			case KeyEvent.VK_LEFT: dir[LEFT] = true; break;
-			case KeyEvent.VK_RIGHT: dir[RIGHT] = true; break;
-		}
+
+	@Override
+	public void mousePressed(MouseEvent e) {
+		cursor = e.getPoint();
+	}
+
+	@Override
+	public void mouseReleased(MouseEvent e) {
+		disp.x = 0;
+		disp.y = 0;
 	}
 
 }
 
-class Point3D{
-	double x,y,z;
+class Point3D {
+	double x, y, z;
 	Color c;
-	
-	public Point3D(double x, double y, double z){ this.x=x; this.y=y; this.z=z; }
-	public Point3D(double x, double y, double z, Color c){ this(x,y,z); this.c=c; }
-	
-	public Color getColor(){ return c; }
-	public Point getRender(double θ, double φ){ 
-		return new Point((int)(x*Math.cos(θ)-y*Math.sin(θ)), (int)((x*Math.sin(θ)+y*Math.cos(θ))*Math.sin(φ)-z*Math.cos(φ))); 
+
+	public Point3D(double x, double y, double z) {
+		this.x = x;
+		this.y = y;
+		this.z = z;
 	}
-	
-	public Point3D midpoint(Point3D b){
-		return new Point3D( (x+b.x)/2.0, (y+b.y)/2.0, (z+b.z)/2.0 );
+
+	public Point3D(double x, double y, double z, Color c) {
+		this(x, y, z);
+		this.c = c;
+	}
+
+	public Point getRender(double θ, double φ) {
+		return new Point((int) (x * Math.cos(θ) - y * Math.sin(θ)),
+				(int) ((x * Math.sin(θ) + y * Math.cos(θ)) * Math.sin(φ) - z * Math.cos(φ)));
+	}
+
+	public Point3D midpoint(Point3D b) {
+		return new Point3D((x + b.x) / 2.0, (y + b.y) / 2.0, (z + b.z) / 2.0);
+	}
+
+	public void draw(Graphics2D g, double θ, double φ) {
+		Point p = getRender(θ, φ);
+		g.setColor(c);
+		g.fillOval(p.x, p.y, 1, 1);
 	}
 }
